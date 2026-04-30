@@ -1,0 +1,68 @@
+name: Superteam Earn Tracker
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Run mode"
+        required: true
+        default: "check"
+        type: choice
+        options:
+          - check
+          - seed
+          - test-alert
+
+permissions:
+  contents: write
+
+jobs:
+  track:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run tracker
+        env:
+          ALERT_CHANNELS: ${{ secrets.ALERT_CHANNELS }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          REQUEST_TIMEOUT: ${{ secrets.REQUEST_TIMEOUT }}
+          LISTING_LIMIT: ${{ secrets.LISTING_LIMIT }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          MODE="${{ github.event.inputs.mode || 'check' }}"
+          if [ "$MODE" = "seed" ]; then
+            python superteam_tracker.py --seed
+          elif [ "$MODE" = "test-alert" ]; then
+            python superteam_tracker.py --test-alert
+          else
+            python superteam_tracker.py
+          fi
+
+      - name: Save seen bounty IDs
+        if: always()
+        run: |
+          if [ -f seen_bounties.json ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add seen_bounties.json
+            git diff --cached --quiet || git commit -m "Update seen bounty IDs"
+            git push
+          fi
