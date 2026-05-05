@@ -439,7 +439,7 @@ def send_alerts(config: Config, bounties: list[dict[str, Any]]) -> bool:
             continue
         results.append(sender(config, bounties))
 
-    return any(results)
+    return bool(results) and all(results)
 
 
 def seed_seen(bounties: list[dict[str, Any]]) -> None:

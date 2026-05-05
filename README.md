@@ -120,5 +120,6 @@ Use Task Scheduler:
 - `.env.example`: configuration template.
 - `requirements.txt`: Python dependencies.
 - `ACHIEVEMENT_PLAN.md`: project goal and roadmap.
+- `SUBSCRIBERS.md`: notes for letting other people subscribe.
 - `seen_bounties.json`: generated after seeding or sending alerts.
 - `tracker.log`: generated after running the tracker.
